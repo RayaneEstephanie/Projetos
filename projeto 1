@@ -1,0 +1,140 @@
+// Variáveis do jogo
+let playerScore = 0;
+let opponentScore = 0;
+
+// Variáveis da bola
+let ball;
+let ballSpeed = 5;
+let ballSize = 20;
+
+// Variáveis da barra do jogador
+let player;
+let playerHeight = 100;
+let playerWidth = 20;
+
+// Variáveis da barra do oponente (IA)
+let opponent;
+let opponentHeight = 100;
+let opponentWidth = 20;
+
+function setup() {
+  createCanvas(600, 400); // Redimensionei o canvas para 600x400
+  ball = new Ball();
+  player = new Paddle(true); // true indica que o jogador controla esta barra
+  opponent = new Paddle(false); // false indica que a IA controla esta barra
+}
+
+function draw() {
+  background(0);
+
+
+  // Atualizar e desenhar a bola
+  ball.update();
+  ball.show();
+
+  // Atualizar e desenhar as barras
+  player.update();
+  player.show();
+  opponent.update();
+  opponent.show();
+
+  // Colisões entre bola e barras
+  ball.checkPaddleCollision(player);
+  ball.checkPaddleCollision(opponent);
+
+  // Verificar se a bola sai da tela
+  if (ball.isOffScreen()) {
+    ball.reset();
+    if (ball.xSpeed > 0) {
+      playerScore++;
+    } else {
+      opponentScore++;
+    }
+  }
+
+  // Exibir pontuações
+  textSize(32);
+  fill(255);
+  text(playerScore, 100, 50);
+  text(opponentScore, width - 100, 50);
+}
+
+function drawField() {
+  // Desenhar campo
+  stroke(255);
+  line(width / 2, 0, width / 2, height);
+  ellipse(width / 2, height / 2, 100, 100);
+}
+
+class Ball {
+  constructor() {
+    this.x = width / 2;
+    this.y = height / 2;
+    this.xSpeed = random(-1, 1) > 0 ? ballSpeed : -ballSpeed;
+    this.ySpeed = random(-1, 1) > 0 ? ballSpeed : -ballSpeed;
+  }
+
+  update() {
+    this.x += this.xSpeed;
+    this.y += this.ySpeed;
+
+    if (this.y < 0 || this.y > height) {
+      this.ySpeed *= -1;
+    }
+  }
+
+  show() {
+    fill(255);
+    ellipse(this.x, this.y, ballSize);
+  }
+
+  checkPaddleCollision(paddle) {
+    if (
+      this.x - ballSize / 2 < paddle.x + paddle.width / 2 &&
+      this.x + ballSize / 2 > paddle.x - paddle.width / 2 &&
+      this.y - ballSize / 2 < paddle.y + paddle.height / 2 &&
+      this.y + ballSize / 2 > paddle.y - paddle.height / 2
+    ) {
+      this.xSpeed *= -1;
+    }
+  }
+
+  isOffScreen() {
+    return this.x - ballSize / 2 < 0 || this.x + ballSize / 2 > width;
+  }
+
+  reset() {
+    this.x = width / 2;
+    this.y = height / 2;
+    this.xSpeed = random(-1, 1) > 0 ? ballSpeed : -ballSpeed;
+    this.ySpeed = random(-1, 1) > 0 ? ballSpeed : -ballSpeed;
+  }
+}
+
+class Paddle {
+  constructor(isPlayer) {
+    this.isPlayer = isPlayer;
+    this.y = height / 2;
+    this.width = isPlayer ? playerWidth : opponentWidth;
+    this.height = isPlayer ? playerHeight : opponentHeight;
+    this.x = isPlayer ? 30 : width - 30;
+  }
+
+  update() {
+    if (this.isPlayer) {
+      this.y = mouseY;
+    } else {
+      // IA controlada pelo computador
+      let targetY = ball.y;
+      let dy = targetY - this.y;
+      this.y += dy * 0.1; // ajuste da velocidade da IA
+    }
+    this.y = constrain(this.y, this.height / 2, height - this.height / 2);
+  }
+
+  show() {
+    fill(255);
+    rectMode(CENTER);
+    rect(this.x, this.y, this.width, this.height);
+  }
+}
